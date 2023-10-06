@@ -6,7 +6,7 @@
 #    By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/12 20:26:46 by ramoussa          #+#    #+#              #
-#    Updated: 2023/10/06 17:20:14 by ramoussa         ###   ########.fr        #
+#    Updated: 2023/10/06 18:31:15 by ramoussa         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -16,7 +16,7 @@ NAME:= philo
 CFLAGS	:= -Wextra -Wall -Werror -g
 BASELIB := ./lib/ft-baselib
 
-HEADERS := -I ./include -I ${BASELIB}/include
+HEADERS := -I ./philo/include -I ${BASELIB}/include
 LIBS := ${BASELIB}/baselib.a
 
 SRCS :=  main.c
