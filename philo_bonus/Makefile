@@ -6,12 +6,11 @@
 #    By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/12 20:26:46 by ramoussa          #+#    #+#              #
-#    Updated: 2023/10/08 15:11:55 by ramoussa         ###   ########.fr        #
+#    Updated: 2023/10/09 12:58:15 by ramoussa         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME:= philo
-# B_NAME := philo_bonus
+NAME:= philo_bonus
 
 CFLAGS	:= -Wextra -Wall -Werror -g
 BASELIB := ./lib/ft-baselib
@@ -20,9 +19,7 @@ HEADERS := -I ./include -I ${BASELIB}/include
 LIBS := ${BASELIB}/baselib.a
 
 SRCS :=  main.c
-# BONUS := bonus/checker.c
 OBJS := ${addprefix src/, ${SRCS:.c=.o}}
-# BONUS_OBJS := ${addprefix src/, ${SRCS:.c=.o} ${BONUS:.c=.o}}
 
 all: BASELIB ${NAME}
 
@@ -31,9 +28,6 @@ all: BASELIB ${NAME}
 
 ${NAME}: ${OBJS}
 	@$(CC) $(CFLAGS) $(OBJS) $(LIBS) $(HEADERS) -o $(NAME) && echo "Successful build...!"
-
-# ${B_NAME}: ${BONUS_OBJS}
-# 	@$(CC) $(CFLAGS) $(BONUS_OBJS) $(LIBS) $(HEADERS) -o $(B_NAME) && echo "Bonus Successful build...!"
 
 BASELIB:
 	@if [ -d ${BASELIB} ]; then\
@@ -44,18 +38,14 @@ BASELIB:
 	fi
 	make --directory=${BASELIB}
 
-# bonus: BASELIB ${B_NAME}
-
 clean:
 	@rm -rf $(OBJS)
-# @rm -rf ${BONUS_OBJS}
 
 fclean: clean
 	@if [ -d ${BASELIB} ]; then\
 		make fclean --directory=${BASELIB};\
 	fi
 	rm -f ${NAME}
-# rm -f ${B_NAME}
 
 re: fclean all
 
