@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/08 15:44:54 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/13 19:34:29 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,21 +48,42 @@ t_philo	*init(int argc, char **argv)
 
 void	print_env(t_philo *env)
 {
-	ft_printf("Number of philosophers %s\n", env->num_of_philosophers);
-	ft_printf("Time to eat %s\n", env->time_to_eat);
-	ft_printf("Time to sleep %s\n", env->time_to_sleep);
-	ft_printf("Time to die %s\n", env->time_to_die);
+	ft_printf("Number of philosophers %d\n", env->num_of_philosophers);
+	ft_printf("Time to eat %d\n", env->time_to_eat);
+	ft_printf("Time to sleep %d\n", env->time_to_sleep);
+	ft_printf("Time to die %d\n", env->time_to_die);
 	ft_printf("Number of times each philosopher must eat %d\n", env->num_of_times_each_philosopher_must_eat);
+}
+
+time_t	time_now()
+{
+	struct timeval currentTime;
+
+	gettimeofday(&currentTime, NULL);
+	return ((currentTime.tv_sec * 1000) + (currentTime.tv_usec / 1000));
+}
+
+time_t	time_since(time_t since)
+{
+	return (time_now() - since);
+}
+
+void	time_sleep(unsigned int ms)
+{
+	usleep(ms * 1000);
 }
 
 int	main(int argc, char **argv)
 {
 	t_philo *env;
-	pthread_t th;
-	
+	// pthread_t th;
 	if (argc < 5)
 		return (0);
 	env = init(argc, argv);
 	print_env(env);
+	time_t t = time_now();
+	printf("%ld\n", t);
+	time_sleep(1);
+	printf("%ld\n", time_since(t));
 	return (0);
 }

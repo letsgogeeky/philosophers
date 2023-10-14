@@ -119,3 +119,5 @@ lib/MLX42/
 ./push_swap
 ./checker
 push_swap_visualizer/
+./philo/philo
+test.c

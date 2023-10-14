@@ -1,6 +1,0 @@
-[submodule "philo/lib/ft-baselib"]
-	path = philo/lib/ft-baselib
-	url = git@github.com:letsgogeeky/ft-baselib.git
-[submodule "philo_bonus/lib/ft-baselib"]
-	path = philo_bonus/lib/ft-baselib
-	url = git@github.com:letsgogeeky/ft-baselib.git
