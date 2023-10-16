@@ -6,25 +6,26 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/13 19:34:29 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/16 14:32:13 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/philo.h"
 
-void abort_exit(t_philo *env, char *msg, int exit_code)
+void abort_exit(t_simulation *env, char *msg, int exit_code)
 {
 	(void)env;
 	if (msg)
-		ft_printf("%s\n", msg);
+		printf("%s\n", msg);
+	// FREE philos & forks
 	exit(exit_code);
 }
 
-t_philo	*init(int argc, char **argv)
+t_simulation	*init(int argc, char **argv)
 {
-	t_philo *env;
+	t_simulation *env;
 
-	env = (t_philo *)malloc(sizeof(t_philo));
+	env = (t_simulation *)malloc(sizeof(t_simulation));
 	env->num_of_philosophers = ft_atoi(argv[1]);
 	if (env->num_of_philosophers < 1)
 		abort_exit(env, "Number of philos less than 1", 0);
@@ -37,22 +38,23 @@ t_philo	*init(int argc, char **argv)
 	env->time_to_sleep = ft_atoi(argv[4]);
 	if (env->time_to_sleep < 0)
 		abort_exit(env, "Time to sleep cannot be less than 0", 2);
+	env->meals_count = INT32_MAX;
 	if (argc == 6)
 	{
-		env->num_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
-		if (env->num_of_times_each_philosopher_must_eat < 0)
+		env->meals_count = ft_atoi(argv[5]);
+		if (env->meals_count < 0)
 			abort_exit(env, "Num of times to eat cannot be less than 0", 2);
 	}
 	return (env);
 }
 
-void	print_env(t_philo *env)
+void	print_env(t_simulation *env)
 {
-	ft_printf("Number of philosophers %d\n", env->num_of_philosophers);
-	ft_printf("Time to eat %d\n", env->time_to_eat);
-	ft_printf("Time to sleep %d\n", env->time_to_sleep);
-	ft_printf("Time to die %d\n", env->time_to_die);
-	ft_printf("Number of times each philosopher must eat %d\n", env->num_of_times_each_philosopher_must_eat);
+	printf("Number of philosophers %d\n", env->num_of_philosophers);
+	printf("Time to eat %d\n", env->time_to_eat);
+	printf("Time to sleep %d\n", env->time_to_sleep);
+	printf("Time to die %d\n", env->time_to_die);
+	printf("Number of times each philosopher must eat %d\n", env->meals_count);
 }
 
 time_t	time_now()
@@ -68,14 +70,299 @@ time_t	time_since(time_t since)
 	return (time_now() - since);
 }
 
-void	time_sleep(unsigned int ms)
+time_t	to_timestamp(struct timeval time)
+{
+	return ((time.tv_sec * 1000) + (time.tv_usec / 1000));
+}
+
+void	time_sleep(int ms)
 {
 	usleep(ms * 1000);
+}
+void	*watcher_worker(void *env)
+{
+	(void)env;
+	printf("Helloooow");
+	return (NULL);
+}
+
+void	log_state(t_simulation *env, t_philo *philo)
+{
+	int	time_arrow;
+
+	time_arrow = time_since(to_timestamp(env->begin));
+	pthread_mutex_lock(&env->logger_mutex);
+	if (philo->status == EAT)
+		printf("%d %i is eating\n", time_arrow, philo->number);
+	if (philo->status == SLEEP)
+		printf("%d %i is sleeping\n", time_arrow, philo->number);
+	if (philo->status == THINK)
+		printf("%d %i is thinking\n", time_arrow, philo->number);
+	if (philo->status == DEAD)
+		printf("%d %i died\n", time_arrow, philo->number);
+	if (philo->status == ACQUIRE)
+		printf("%d %i has taken a fork\n", time_arrow, philo->number);
+	pthread_mutex_unlock(&env->logger_mutex);	
+}
+
+int	is_dead(t_philo *philo)
+{
+	pthread_mutex_lock(&philo->starvation_mutex);
+	if (philo->died == 1)
+	{
+		pthread_mutex_unlock(&philo->starvation_mutex);
+		return (1);
+	}
+	pthread_mutex_unlock(&philo->starvation_mutex);
+	return (0);
+}
+
+int	will_starve(t_simulation *env, t_philo *philo, int action_ms)
+{
+	if (time_since(to_timestamp(philo->last_meal_at)) + action_ms > env->time_to_die)
+	{
+		time_sleep(env->time_to_die - time_since(to_timestamp(philo->last_meal_at)));
+		if (is_dead(philo))
+			return (1);
+		philo->status = DEAD;
+		log_state(env, philo);
+		pthread_mutex_lock(&philo->starvation_mutex);
+		philo->died = 1;
+		pthread_mutex_unlock(&philo->starvation_mutex);
+		return (1);
+	}
+	return (0);
+}
+
+
+int	ph_eat(t_simulation *env, t_philo *philo)
+{
+	philo->status = EAT;
+	if (philo->number % 2 == 0)
+	{
+		philo->status = ACQUIRE;
+		pthread_mutex_lock(philo->right_fork);
+		log_state(env, philo);
+		pthread_mutex_lock(philo->left_fork);
+		log_state(env, philo);
+		philo->status = EAT;
+		log_state(env, philo);
+		gettimeofday(&philo->last_meal_at, NULL);
+		if (will_starve(env, philo, env->time_to_eat))
+		{
+			pthread_mutex_unlock(philo->right_fork);
+			pthread_mutex_unlock(philo->left_fork);
+			return (1);
+		}
+		time_sleep(env->time_to_eat);
+		pthread_mutex_unlock(philo->right_fork);
+		pthread_mutex_unlock(philo->left_fork);
+	}
+	else
+	{
+		philo->status = ACQUIRE;
+		pthread_mutex_lock(philo->left_fork);
+		log_state(env, philo);
+		pthread_mutex_lock(philo->right_fork);
+		log_state(env, philo);
+		philo->status = EAT;
+		log_state(env, philo);
+		gettimeofday(&philo->last_meal_at, NULL);
+		if (will_starve(env, philo, env->time_to_eat))
+		{
+			pthread_mutex_unlock(philo->left_fork);
+			pthread_mutex_unlock(philo->right_fork);
+			return (1);
+		}
+		time_sleep(env->time_to_eat);
+		pthread_mutex_unlock(philo->left_fork);
+		pthread_mutex_unlock(philo->right_fork);
+	}
+	if (is_dead(philo))
+		return (1);
+	return (0);
+}
+
+int	ph_sleep(t_simulation *env, t_philo *philo)
+{
+	philo->status = SLEEP;
+	log_state(env, philo);
+	if (will_starve(env, philo, env->time_to_sleep))
+		return (1);
+	time_sleep(env->time_to_sleep);
+	return (0);
+}
+
+int	ph_think(t_simulation *env, t_philo *philo, int thinking_ms)
+{
+	philo->status = THINK;
+	log_state(env, philo);
+	if (will_starve(env, philo, thinking_ms))
+		return (1);
+	time_sleep(thinking_ms);
+	return (0);
+}
+
+int	philo_lifecycle(t_simulation *env, t_philo *philo, int order)
+{
+	while (philo->meals_eaten < env->meals_count)
+	{
+		if (philo->number == order && ph_think(env, philo, env->time_to_eat))
+			return (1);
+		order++;
+		if (ph_eat(env, philo))
+			return (1);
+		if (ph_sleep(env, philo))
+			return (1);
+		if (env->time_to_eat > env->time_to_sleep && \
+			ph_think(env, philo, env->time_to_eat - env->time_to_sleep))
+			return (1);
+		if (order && order % 2 == 1 && order >= env->num_of_philosophers)
+			order = 1;
+		else if (order && order % 2 == 0 && order >= env->num_of_philosophers)
+			order = 2;
+		else if (order)
+			order += 2;
+		pthread_mutex_lock(&philo->eating_mutex);
+		philo->meals_eaten++;
+		pthread_mutex_unlock(&philo->eating_mutex);
+	}
+	return (0);
+}
+
+void	*philo_worker(void *arg)
+{
+	t_philo_worker_arg *env_philo;
+	int		order;
+	
+	env_philo = (t_philo_worker_arg *)arg;
+	if (env_philo->env->num_of_philosophers % 2 == 0)
+		order = 0;
+	else
+		order = 1;
+	if (env_philo->philo->number == order)
+		log_state(env_philo->env, env_philo->philo);
+	else if (env_philo->philo->meals_eaten < env_philo->env->meals_count && \
+		env_philo->philo->number % 2 == 0)
+	{
+		log_state(env_philo->env, env_philo->philo);
+		if (ph_think(env_philo->env, env_philo->philo, env_philo->env->time_to_eat))
+			return (NULL);
+		if (order)
+			order++;
+	}
+	philo_lifecycle(env_philo->env, env_philo->philo, order);
+	return (NULL);
+}
+
+int	dispatch_philosophers(t_simulation *env)
+{
+	int	idx;
+	t_philo_worker_arg	worker_arg;
+	
+	idx = 0;
+	while (idx < env->num_of_philosophers)
+	{
+		worker_arg.env = env;
+		worker_arg.philo = &env->philos[idx];
+		if (pthread_create(&env->philos[idx].worker, NULL, philo_worker, &worker_arg))
+			return (1); // FREE EVERYTHING
+		idx++;
+	}
+	return (0);
+}
+
+int	seat_philos(t_simulation *env)
+{
+	int	idx;
+
+	idx = 0;
+	while (idx < env->num_of_philosophers)
+	{
+		env->philos[idx].number = idx + 1;
+		env->philos[idx].status = THINK;
+		env->philos[idx].meals_eaten = 0;
+		env->philos[idx].last_meal_at = env->begin;
+		if (pthread_mutex_init(&env->forks[idx], NULL))
+			return (1); // FREE ALL
+		if (pthread_mutex_init(&env->philos[idx].eating_mutex, NULL))
+			return (1); // FREE ALL
+		if (pthread_mutex_init(&env->philos[idx].starvation_mutex, NULL))
+			return (1); // FREE ALL
+		env->philos[idx].right_fork = &env->forks[idx];
+		if (idx >= 1)
+			env->philos[idx - 1].left_fork = &env->forks[idx];
+		idx++;
+	}
+	env->philos[idx - 1].left_fork = &env->forks[0];
+	return (0);
+}
+
+int	build_table(t_simulation *env)
+{
+	env->philos = ft_calloc(env->num_of_philosophers, sizeof(t_philo));
+	if (!env->philos)
+		return (1);
+	env->forks = ft_calloc(env->num_of_philosophers, sizeof(pthread_mutex_t));
+	if (!env->forks)
+		return (1); // remember to FREE philos if this returns
+	if (pthread_mutex_init(&env->logger_mutex, NULL))
+		return (1); // remember to FREE philos & forks if this fails
+	if (seat_philos(env))
+		return (1); // remember to FREE ALL and Destroy mutexes
+	return (0);
+}
+
+void	join_all_threads(t_simulation *env)
+{
+	int	idx;
+	
+	idx = 0;
+	while (idx < env->num_of_philosophers)
+	{
+		pthread_join(env->philos[idx].worker, NULL);
+		idx++;
+	}
+}
+
+void	sad_philo(t_simulation *env)
+{
+	log_state(env, &env->philos[0]);
+	time_sleep(env->time_to_die);
+	env->philos[0].status = DEAD;
+	log_state(env, &env->philos[0]);
+	// TODO: REMEMBER TO FREE EVERYTHING ON THE MAIN CALLER!
+}
+
+int	begin_simulation(t_simulation *env)
+{
+	pthread_t	watcher;
+
+	if (pthread_create(&watcher, NULL, watcher_worker, env))
+		return (1);
+	if (dispatch_philosophers(env))
+		return (1);
+	pthread_join(watcher, NULL);
+	join_all_threads(env);
+	return (0);
+}
+int	setup_simulation(t_simulation *env)
+{
+	env->bigbang_at = time_now();
+	gettimeofday(&env->begin, NULL);
+	if(build_table(env))
+		return (1);	
+	if (env->num_of_philosophers == 1)
+	{
+		sad_philo(env);
+		return (1);
+	}
+	return (0);
 }
 
 int	main(int argc, char **argv)
 {
-	t_philo *env;
+	t_simulation *env;
 	// pthread_t th;
 	if (argc < 5)
 		return (0);
@@ -83,7 +370,11 @@ int	main(int argc, char **argv)
 	print_env(env);
 	time_t t = time_now();
 	printf("%ld\n", t);
-	time_sleep(1);
+	if (setup_simulation(env))
+		return (1); // TODO: FREE EVERYTHING AND EXIT
+	if (begin_simulation(env))
+		return (1); // TODO: FREE EVERYTHING AND EXIT
 	printf("%ld\n", time_since(t));
+	// TODO: FREE EVERYTHINGGGGG!!
 	return (0);
 }

@@ -6,7 +6,7 @@
 #    By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/12 20:26:46 by ramoussa          #+#    #+#              #
-#    Updated: 2023/10/14 13:12:37 by ramoussa         ###   ########.fr        #
+#    Updated: 2023/10/16 14:30:27 by ramoussa         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ NAME:= philo
 
 CFLAGS	:= -Wextra -Wall -Werror -g
 HEADERS := -I ./include
-SRCS :=  main.c
+SRCS :=  memory.c validator.c main.c
 OBJS := ${addprefix src/, ${SRCS:.c=.o}}
 
 all: ${NAME}
