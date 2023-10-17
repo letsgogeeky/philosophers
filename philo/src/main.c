@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ramymoussa <ramymoussa@student.42.fr>      +#+  +:+       +#+        */
+/*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/17 11:22:07 by ramymoussa       ###   ########.fr       */
+/*   Updated: 2023/10/17 16:44:14 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ t_simulation	*init_simulation(int argc, char **argv)
 	env->time_to_sleep = ft_atoi(argv[4]);
 	if (env->time_to_sleep < 0)
 		abort_exit(env, "Time to sleep cannot be less than 0", 2);
-	env->meals_count = INT32_MAX;
+	env->meals_count = 2147483640;
 	if (argc == 6)
 	{
 		env->meals_count = ft_atoi(argv[5]);
@@ -102,7 +102,7 @@ void	log_state(t_simulation *env, t_philo *philo)
 		printf("%i %i died\n", time_arrow, philo->number);
 	if (philo->status == ACQUIRE)
 		printf("%i %i has taken a fork\n", time_arrow, philo->number);
-	pthread_mutex_unlock(&env->logger_mutex);	
+	pthread_mutex_unlock(&env->logger_mutex);
 }
 
 int	is_dead(t_philo *philo)
@@ -236,10 +236,9 @@ void	*philo_worker(void *arg)
 	int		order;
 	
 	env_philo = (t_philo_worker_arg *)arg;
+	order = 1;
 	if (env_philo->env->num_of_philosophers % 2 == 0)
 		order = 0;
-	else
-		order = 1;
 	if (env_philo->philo->number == order)
 		log_state(env_philo->env, env_philo->philo);
 	else if (env_philo->philo->meals_eaten < env_philo->env->meals_count && \
@@ -254,6 +253,14 @@ void	*philo_worker(void *arg)
 	philo_lifecycle(env_philo->env, env_philo->philo, order);
 	return (NULL);
 }
+t_philo_worker_arg	*copy_philo_worker_arg(t_philo_worker_arg arg)
+{
+	t_philo_worker_arg worker_arg;
+	
+	worker_arg.env = arg.env;
+	worker_arg.philo = arg.philo;
+	return (&worker_arg);
+}
 
 int	dispatch_philosophers(t_simulation *env)
 {
@@ -265,7 +272,7 @@ int	dispatch_philosophers(t_simulation *env)
 	{
 		worker_arg.env = env;
 		worker_arg.philo = &env->philos[idx];
-		if (pthread_create(&env->philos[idx].worker, NULL, philo_worker, &worker_arg))
+		if (pthread_create(&env->philos[idx].worker, NULL, philo_worker, copy_philo_worker_arg(worker_arg)))
 			return (1); // FREE EVERYTHING
 		idx++;
 	}
