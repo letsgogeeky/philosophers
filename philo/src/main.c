@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ramymoussa <ramymoussa@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/16 14:32:13 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/17 11:22:07 by ramymoussa       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ void abort_exit(t_simulation *env, char *msg, int exit_code)
 	exit(exit_code);
 }
 
-t_simulation	*init(int argc, char **argv)
+t_simulation	*init_simulation(int argc, char **argv)
 {
 	t_simulation *env;
 
@@ -82,7 +82,7 @@ void	time_sleep(int ms)
 void	*watcher_worker(void *env)
 {
 	(void)env;
-	printf("Helloooow");
+	// printf("Helloooow");
 	return (NULL);
 }
 
@@ -93,15 +93,15 @@ void	log_state(t_simulation *env, t_philo *philo)
 	time_arrow = time_since(to_timestamp(env->begin));
 	pthread_mutex_lock(&env->logger_mutex);
 	if (philo->status == EAT)
-		printf("%d %i is eating\n", time_arrow, philo->number);
+		printf("%i %i is eating\n", time_arrow, philo->number);
 	if (philo->status == SLEEP)
-		printf("%d %i is sleeping\n", time_arrow, philo->number);
+		printf("%i %i is sleeping\n", time_arrow, philo->number);
 	if (philo->status == THINK)
-		printf("%d %i is thinking\n", time_arrow, philo->number);
+		printf("%i %i is thinking\n", time_arrow, philo->number);
 	if (philo->status == DEAD)
-		printf("%d %i died\n", time_arrow, philo->number);
+		printf("%i %i died\n", time_arrow, philo->number);
 	if (philo->status == ACQUIRE)
-		printf("%d %i has taken a fork\n", time_arrow, philo->number);
+		printf("%i %i has taken a fork\n", time_arrow, philo->number);
 	pthread_mutex_unlock(&env->logger_mutex);	
 }
 
@@ -327,6 +327,7 @@ void	join_all_threads(t_simulation *env)
 
 void	sad_philo(t_simulation *env)
 {
+	env->philos[0].status = ACQUIRE;
 	log_state(env, &env->philos[0]);
 	time_sleep(env->time_to_die);
 	env->philos[0].status = DEAD;
@@ -366,7 +367,7 @@ int	main(int argc, char **argv)
 	// pthread_t th;
 	if (argc < 5)
 		return (0);
-	env = init(argc, argv);
+	env = init_simulation(argc, argv);
 	print_env(env);
 	time_t t = time_now();
 	printf("%ld\n", t);
