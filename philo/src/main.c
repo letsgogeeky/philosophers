@@ -6,296 +6,11 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 20:05:58 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 21:45:35 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/philo.h"
-
-void	destroy_mutexes(t_simulation *env)
-{
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		pthread_mutex_destroy(&env->forks[idx]);
-		pthread_mutex_destroy(&env->philos[idx].eating_mutex);
-		pthread_mutex_destroy(&env->philos[idx].starvation_mutex);
-	}
-	pthread_mutex_destroy(&env->logger_mutex);
-}
-
-void abort_exit(t_simulation *env, char *msg, int exit_code)
-{
-	(void)env;
-	if (msg)
-		printf("%s\n", msg);
-	// FREE philos & forks
-	exit(exit_code);
-}
-
-t_simulation	*init_simulation(int argc, char **argv)
-{
-	t_simulation *env;
-
-	env = (t_simulation *)malloc(sizeof(t_simulation));
-	env->num_of_philosophers = ft_atoi(argv[1]);
-	if (env->num_of_philosophers < 1)
-		abort_exit(env, "Number of philos less than 1", 0);
-	env->time_to_die = ft_atoi(argv[2]);
-	if (env->time_to_die < 0)
-		abort_exit(env, "Time of die cannot be less than 0", 2);
-	env->time_to_eat = ft_atoi(argv[3]);
-	if (env->time_to_eat < 0)
-		abort_exit(env, "Time to eat cannot be less than 0", 2);
-	env->time_to_sleep = ft_atoi(argv[4]);
-	if (env->time_to_sleep < 0)
-		abort_exit(env, "Time to sleep cannot be less than 0", 2);
-	env->meals_count = 2147483640;
-	if (argc == 6)
-	{
-		env->meals_count = ft_atoi(argv[5]);
-		if (env->meals_count < 0)
-			abort_exit(env, "Num of times to eat cannot be less than 0", 2);
-	}
-	return (env);
-}
-
-void	print_env(t_simulation *env)
-{
-	printf("Number of philosophers %d\n", env->num_of_philosophers);
-	printf("Time to eat %d\n", env->time_to_eat);
-	printf("Time to sleep %d\n", env->time_to_sleep);
-	printf("Time to die %d\n", env->time_to_die);
-	printf("Number of times each philosopher must eat %d\n", env->meals_count);
-}
-
-time_t	time_now()
-{
-	struct timeval currentTime;
-
-	gettimeofday(&currentTime, NULL);
-	return ((currentTime.tv_sec * 1000) + (currentTime.tv_usec * 0.001));
-}
-
-time_t	time_since(time_t since)
-{
-	return (time_now() - since);
-}
-
-time_t	to_timestamp(struct timeval time)
-{
-	return ((time.tv_sec * 1000) + (time.tv_usec * 0.001));
-}
-
-void	time_sleep(int ms)
-{
-	struct timeval time;
-	time_t	until;
-	
-	gettimeofday(&time, NULL);
-	until = to_timestamp(time) + ms;
-	if (ms > 5)
-		usleep(((ms - 5) * 1000));
-	gettimeofday(&time, NULL);
-	while (to_timestamp(time) < until)
-	{
-		usleep(1000);
-		gettimeofday(&time, NULL);
-	}
-}
-
-int	has_death(t_simulation *env)
-{
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		pthread_mutex_lock(&env->philos[idx].starvation_mutex);
-		if (env->philos[idx].died == 1)
-		{
-			pthread_mutex_unlock(&env->philos[idx].starvation_mutex);
-			return (1);
-		}
-		pthread_mutex_unlock(&env->philos[idx].starvation_mutex);
-		idx++;
-	}
-	return (0);
-}
-void	signal_terminate_all(t_simulation *env)
-{
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		pthread_mutex_lock(&env->philos[idx].starvation_mutex);
-		env->philos[idx].died = 1;
-		pthread_mutex_unlock(&env->philos[idx].starvation_mutex);
-		idx++;
-	}	
-}
-
-int	should_serve_more_meals(t_simulation *env)
-{
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		pthread_mutex_lock(&env->philos[idx].eating_mutex);
-		if (env->philos[idx].meals_eaten < env->meals_count)
-		{
-			pthread_mutex_unlock(&env->philos[idx].eating_mutex);
-			return (1);
-		}
-		pthread_mutex_unlock(&env->philos[idx].eating_mutex);
-		idx++;
-	}
-	return (0);
-}
-
-void	*watcher_worker(void *simulation)
-{
-	t_simulation *env;
-	
-	env = (t_simulation *)simulation;
-	while (1)
-	{
-		time_sleep(1);
-		if (has_death(env))
-		{
-			signal_terminate_all(env);
-			break;
-		}
-		if (should_serve_more_meals(env) == 0)
-			break;
-	}
-	return (NULL);
-}
-
-void	log_state(t_simulation *env, t_philo *philo)
-{
-	int	time_arrow;
-
-	time_arrow = time_since(to_timestamp(env->begin));
-	pthread_mutex_lock(&env->logger_mutex);
-	if (philo->status == EAT)
-		printf("%i %i is eating\n", time_arrow, philo->number);
-	if (philo->status == SLEEP)
-		printf("%i %i is sleeping\n", time_arrow, philo->number);
-	if (philo->status == THINK)
-		printf("%i %i is thinking\n", time_arrow, philo->number);
-	if (philo->status == DEAD)
-		printf("%i %i died\n", time_arrow, philo->number);
-	if (philo->status == ACQUIRE)
-		printf("%i %i has taken a fork\n", time_arrow, philo->number);
-	pthread_mutex_unlock(&env->logger_mutex);
-}
-
-int	is_dead(t_philo *philo)
-{
-	pthread_mutex_lock(&philo->starvation_mutex);
-	if (philo->died == 1)
-	{
-		pthread_mutex_unlock(&philo->starvation_mutex);
-		return (1);
-	}
-	pthread_mutex_unlock(&philo->starvation_mutex);
-	return (0);
-}
-void	set_state(t_simulation *env, t_philo *philo, \
-			enum e_philo_state status)
-{
-	philo->status = status;
-	log_state(env, philo);
-}
-
-int	will_starve(t_simulation *env, t_philo *philo, int action_ms)
-{
-	if (time_since(to_timestamp(philo->last_meal_at)) + action_ms > env->time_to_die)
-	{
-		time_sleep(env->time_to_die - time_since(to_timestamp(philo->last_meal_at)));
-		if (is_dead(philo))
-			return (1);
-		set_state(env, philo, DEAD);
-		pthread_mutex_lock(&philo->starvation_mutex);
-		philo->died = 1;
-		pthread_mutex_unlock(&philo->starvation_mutex);
-		return (1);
-	}
-	return (0);
-}
-
-int	ph_eat(t_simulation *env, t_philo *philo)
-{
-	philo->status = EAT;
-	if (philo->number % 2 == 0)
-	{
-		philo->status = ACQUIRE;
-		pthread_mutex_lock(philo->right_fork);
-		log_state(env, philo);
-		pthread_mutex_lock(philo->left_fork);
-		log_state(env, philo);
-		set_state(env, philo, EAT);
-		gettimeofday(&philo->last_meal_at, NULL);
-		if (will_starve(env, philo, env->time_to_eat))
-		{
-			pthread_mutex_unlock(philo->left_fork);
-			pthread_mutex_unlock(philo->right_fork);
-			return (1);
-		}
-		time_sleep(env->time_to_eat);
-		pthread_mutex_unlock(philo->left_fork);
-		pthread_mutex_unlock(philo->right_fork);
-	}
-	else
-	{
-		philo->status = ACQUIRE;
-		pthread_mutex_lock(philo->left_fork);
-		log_state(env, philo);
-		pthread_mutex_lock(philo->right_fork);
-		log_state(env, philo);
-		set_state(env, philo, EAT);
-		gettimeofday(&philo->last_meal_at, NULL);
-		if (will_starve(env, philo, env->time_to_eat))
-		{
-			pthread_mutex_unlock(philo->right_fork);
-			pthread_mutex_unlock(philo->left_fork);
-			return (1);
-		}
-		time_sleep(env->time_to_eat);
-		pthread_mutex_unlock(philo->right_fork);
-		pthread_mutex_unlock(philo->left_fork);
-	}
-	if (is_dead(philo))
-		return (1);
-	return (0);
-}
-
-int	ph_sleep(t_simulation *env, t_philo *philo)
-{
-	set_state(env, philo, SLEEP);
-	if (will_starve(env, philo, env->time_to_sleep))
-		return (1);
-	time_sleep(env->time_to_sleep);
-	if (is_dead(philo))
-		return (1);
-	set_state(env, philo, THINK);
-	return (0);
-}
-
-int	ph_think(t_simulation *env, t_philo *philo, int thinking_ms)
-{
-	if (will_starve(env, philo, thinking_ms))
-		return (1);
-	time_sleep(thinking_ms);
-	if (is_dead(philo))
-		return (1);
-	return (0);
-}
 
 int	philo_lifecycle(t_simulation *env, t_philo *philo, int order)
 {
@@ -373,15 +88,7 @@ int	dispatch_philosophers(t_simulation *env)
 	}
 	return (0);
 }
-void	adjust_for_midlaunch_abort(t_simulation *env, pthread_mutex_t *to_destory1, \
-			pthread_mutex_t *to_destroy2, int philos_initialized)
-{
-	if (to_destory1 != NULL)
-		pthread_mutex_destroy(to_destory1);
-	if (to_destroy2 != NULL)
-		pthread_mutex_destroy(to_destory1);
-	env->num_of_philosophers = philos_initialized;
-}
+
 int	seat_philos(t_simulation *env)
 {
 	int	idx;
@@ -458,8 +165,6 @@ int	begin_simulation(t_simulation *env)
 	return (0);
 }
 
-
-
 int	setup_simulation(t_simulation *env)
 {
 	env->bigbang_at = time_now();
@@ -472,17 +177,7 @@ int	setup_simulation(t_simulation *env)
 	}
 	return (0);
 }
-void	populate_begin_time(t_simulation *env)
-{
-	int	idx;
 
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		env->philos[idx].last_meal_at = env->begin;
-		idx++;
-	}
-}
 
 int	main(int argc, char **argv)
 {

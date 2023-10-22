@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:53 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/16 14:30:33 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 21:45:20 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,9 +63,34 @@ typedef struct s_philo_worker_arg
 	t_simulation	*env;
 }	t_philo_worker_arg;
 
+void			*ft_calloc(unsigned int count, unsigned int size);
+void			log_state(t_simulation *env, t_philo *philo);
+void			print_env(t_simulation *env);
 
-int		ft_atoi(const char *str);
-int		ra_is_int(char *str);
-void	*ft_calloc(unsigned int count, unsigned int size);
+time_t			time_now();
+time_t			time_since(time_t since);
+time_t			to_timestamp(struct timeval time);
+void			time_sleep(int ms);
+
+void			populate_begin_time(t_simulation *env);
+
+t_simulation	*init_simulation(int argc, char **argv);
+
+void			*watcher_worker(void *simulation);
+
+int				ph_eat(t_simulation *env, t_philo *philo);
+int				ph_think(t_simulation *env, t_philo *philo, int thinking_ms);
+int				ph_sleep(t_simulation *env, t_philo *philo);
+
+void			set_state(t_simulation *env, t_philo *philo, \
+					enum e_philo_state status);
+int				is_dead(t_philo *philo);
+int				will_starve(t_simulation *env, t_philo *philo, int action_ms);
+int				has_death(t_simulation *env);
+
+void			adjust_for_midlaunch_abort(t_simulation *env, \
+					pthread_mutex_t *to_destory1, \
+					pthread_mutex_t *to_destroy2, int philos_initialized);
+void			abort_exit(t_simulation *env, char *msg, int exit_code);
 
 #endif
