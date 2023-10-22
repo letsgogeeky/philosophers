@@ -6,11 +6,25 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/21 21:28:18 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 20:05:58 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/philo.h"
+
+void	destroy_mutexes(t_simulation *env)
+{
+	int	idx;
+
+	idx = 0;
+	while (idx < env->num_of_philosophers)
+	{
+		pthread_mutex_destroy(&env->forks[idx]);
+		pthread_mutex_destroy(&env->philos[idx].eating_mutex);
+		pthread_mutex_destroy(&env->philos[idx].starvation_mutex);
+	}
+	pthread_mutex_destroy(&env->logger_mutex);
+}
 
 void abort_exit(t_simulation *env, char *msg, int exit_code)
 {
@@ -287,9 +301,8 @@ int	philo_lifecycle(t_simulation *env, t_philo *philo, int order)
 {
 	while (philo->meals_eaten < env->meals_count)
 	{
-		if (philo->number == order && ph_think(env, philo, env->time_to_eat))
+		if (philo->number == order && order++ && ph_think(env, philo, env->time_to_eat))
 			return (1);
-		order++;
 		if (ph_eat(env, philo))
 			return (1);
 		if (ph_sleep(env, philo))
@@ -445,19 +458,7 @@ int	begin_simulation(t_simulation *env)
 	return (0);
 }
 
-void	destroy_mutexes(t_simulation *env)
-{
-	int	idx;
 
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		pthread_mutex_destroy(&env->forks[idx]);
-		pthread_mutex_destroy(&env->philos[idx].eating_mutex);
-		pthread_mutex_destroy(&env->philos[idx].starvation_mutex);
-	}
-	pthread_mutex_destroy(&env->logger_mutex);
-}
 
 int	setup_simulation(t_simulation *env)
 {
