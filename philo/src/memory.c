@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/14 17:08:06 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/16 14:30:52 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 21:51:13 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,4 +27,14 @@ void	*ft_calloc(unsigned int count, unsigned int size)
 		idx++;
 	}
 	return (ptr);
+}
+
+t_philo_worker_arg	*copy_philo_worker_arg(t_philo_worker_arg arg)
+{
+	t_philo_worker_arg *worker_arg;
+	
+	worker_arg = (t_philo_worker_arg *)malloc(sizeof(t_philo_worker_arg));
+	worker_arg->env = arg.env;
+	worker_arg->philo = arg.philo;
+	return (worker_arg);
 }

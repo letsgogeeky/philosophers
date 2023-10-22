@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:50:35 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 21:48:07 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 21:50:03 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,4 +66,3 @@ static int	should_serve_more_meals(t_simulation *env)
 	}
 	return (0);
 }
-

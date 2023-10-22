@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 21:45:35 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/22 21:55:14 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,15 +61,7 @@ void	*philo_worker(void *arg)
 	philo_lifecycle(env_philo->env, env_philo->philo, order);
 	return (free(env_philo), NULL);
 }
-t_philo_worker_arg	*copy_philo_worker_arg(t_philo_worker_arg arg)
-{
-	t_philo_worker_arg *worker_arg;
-	
-	worker_arg = (t_philo_worker_arg *)malloc(sizeof(t_philo_worker_arg));
-	worker_arg->env = arg.env;
-	worker_arg->philo = arg.philo;
-	return (worker_arg);
-}
+
 
 int	dispatch_philosophers(t_simulation *env)
 {
@@ -117,12 +109,6 @@ int	seat_philos(t_simulation *env)
 
 int	build_table(t_simulation *env)
 {
-	env->philos = ft_calloc(env->num_of_philosophers, sizeof(t_philo));
-	if (!env->philos)
-		return (1);
-	env->forks = ft_calloc(env->num_of_philosophers, sizeof(pthread_mutex_t));
-	if (!env->forks)
-		return (1); // remember to FREE philos if this returns
 	if (pthread_mutex_init(&env->logger_mutex, NULL))
 		return (1); // remember to FREE philos & forks if this fails
 	if (seat_philos(env))
