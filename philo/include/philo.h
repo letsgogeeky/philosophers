@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:53 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 21:53:13 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/24 20:43:59 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,8 @@ typedef struct s_simulation
 	t_philo			*philos;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	logger_mutex;
+	int				has_death;
+	pthread_mutex_t	any_death_mutex;
 }	t_simulation;
 
 typedef struct s_philo_worker_arg
@@ -76,8 +78,13 @@ void				time_sleep(int ms);
 void				populate_begin_time(t_simulation *env);
 
 t_simulation		*init_simulation(int argc, char **argv);
+void				allocate_philos_and_forks(t_simulation *env);
 
+void				sad_philo(t_simulation *env);
+void				*philo_worker(void *arg);
 void				*watcher_worker(void *simulation);
+int					setup_simulation(t_simulation *env);
+int					begin_simulation(t_simulation *env);
 
 int					ph_eat(t_simulation *env, t_philo *philo);
 int					ph_think(t_simulation *env, t_philo *philo, \

@@ -1,30 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo.h                                            :+:      :+:    :+:   */
+/*   sadphilo.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/10/06 17:11:53 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/08 15:43:43 by ramoussa         ###   ########.fr       */
+/*   Created: 2023/10/23 21:13:14 by ramoussa          #+#    #+#             */
+/*   Updated: 2023/10/24 21:33:09 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PHILO_H
-# define PHILO_H
+#include "philo.h"
 
-# include <stdio.h>
-# include <pthread.h>
-# include "baselib.h"
-
-typedef struct s_philo
+void	sad_philo(t_simulation *env)
 {
-	int	num_of_philosophers;
-	int	time_to_die;
-	int	time_to_eat;
-	int	time_to_sleep;
-	int	num_of_times_each_philosopher_must_eat;
-}	t_philo;
-
-
-#endif
+	env->philos[0].status = ACQUIRE;
+	log_state(env, &env->philos[0]);
+	time_sleep(env->time_to_die);
+	env->philos[0].status = DEAD;
+	log_state(env, &env->philos[0]);
+}

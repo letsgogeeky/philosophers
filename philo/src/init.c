@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/14 13:34:13 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 21:56:19 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/24 21:36:35 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void	populate_begin_time(t_simulation *env)
 
 t_simulation	*init_simulation(int argc, char **argv)
 {
-	t_simulation *env;
+	t_simulation	*env;
 
 	env = (t_simulation *)malloc(sizeof(t_simulation));
 	env->num_of_philosophers = ft_atoi(argv[1]);
@@ -82,11 +82,6 @@ t_simulation	*init_simulation(int argc, char **argv)
 		if (env->meals_count < 0)
 			abort_exit(env, "Num of times to eat cannot be less than 0", 2);
 	}
-	env->philos = ft_calloc(env->num_of_philosophers, sizeof(t_philo));
-	if (!env->philos)
-		return (1);
-	env->forks = ft_calloc(env->num_of_philosophers, sizeof(pthread_mutex_t));
-	if (!env->forks)
-		abort_exit(env, NULL, 1); // remember to FREE philos if this returns
+	env->has_death = 0;
 	return (env);
 }

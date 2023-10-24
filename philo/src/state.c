@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:32:34 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/22 20:47:09 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/10/24 21:32:51 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,31 @@ int	is_dead(t_philo *philo)
 	return (0);
 }
 
+int	has_any_death(t_simulation *env)
+{
+	pthread_mutex_lock(&env->any_death_mutex);
+	if (env->has_death)
+	{
+		pthread_mutex_unlock(&env->any_death_mutex);
+		return (1);
+	}
+	pthread_mutex_unlock(&env->any_death_mutex);
+	return (0);
+}
+
 int	will_starve(t_simulation *env, t_philo *philo, int action_ms)
 {
-	if (time_since(to_timestamp(philo->last_meal_at)) + action_ms > env->time_to_die)
+	time_t	since;
+
+	if (has_any_death(env))
+		return (1);
+	since = time_since(to_timestamp(philo->last_meal_at));
+	if (since + action_ms > env->time_to_die)
 	{
-		time_sleep(env->time_to_die - time_since(to_timestamp(philo->last_meal_at)));
+		pthread_mutex_lock(&env->any_death_mutex);
+		env->has_death = 1;
+		pthread_mutex_unlock(&env->any_death_mutex);
+		time_sleep(env->time_to_die - since);
 		if (is_dead(philo))
 			return (1);
 		set_state(env, philo, DEAD);
@@ -54,15 +74,9 @@ int	has_death(t_simulation *env)
 	idx = 0;
 	while (idx < env->num_of_philosophers)
 	{
-		pthread_mutex_lock(&env->philos[idx].starvation_mutex);
-		if (env->philos[idx].died == 1)
-		{
-			pthread_mutex_unlock(&env->philos[idx].starvation_mutex);
+		if (is_dead(&env->philos[idx]))
 			return (1);
-		}
-		pthread_mutex_unlock(&env->philos[idx].starvation_mutex);
 		idx++;
 	}
 	return (0);
 }
-
