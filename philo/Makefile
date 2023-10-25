@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ramymoussa <ramymoussa@student.42.fr>      +#+  +:+       +#+         #
+#    By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/08/12 20:26:46 by ramoussa          #+#    #+#              #
-#    Updated: 2023/10/17 11:12:46 by ramymoussa       ###   ########.fr        #
+#    Updated: 2023/10/23 21:21:39 by ramoussa         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,10 @@ NAME:= philo
 
 CFLAGS	:= -Wextra -Wall -Werror -g
 HEADERS := -I ./include
-SRCS :=  memory.c validator.c main.c
+SRCS := init.c action.c logger.c \
+	offload.c state.c watcher.c \
+	memory.c time.c main.c \
+	worker.c sadphilo.c dispatcher.c
 OBJS := ${addprefix src/, ${SRCS:.c=.o}}
 
 all: ${NAME}
