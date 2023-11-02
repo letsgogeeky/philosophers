@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:27:17 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/25 13:48:22 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/02 21:47:36 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ void	log_state(t_simulation *env, t_philo *philo)
 	int	time_arrow;
 
 	time_arrow = time_since(to_timestamp(env->begin));
-	pthread_mutex_lock(&env->logger_mutex);
+	sem_wait(env->logger_sem);
 	if (philo->status == EAT)
 		printf("%i %i is eating\n", time_arrow, philo->number);
 	if (philo->status == SLEEP)
@@ -28,7 +28,7 @@ void	log_state(t_simulation *env, t_philo *philo)
 		printf("%i %i died\n", time_arrow, philo->number);
 	if (philo->status == ACQUIRE)
 		printf("%i %i has taken a fork\n", time_arrow, philo->number);
-	pthread_mutex_unlock(&env->logger_mutex);
+	sem_post(env->logger_sem);
 }
 
 void	print_env(t_simulation *env)

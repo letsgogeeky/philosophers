@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:53 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/25 14:19:33 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/02 21:51:26 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 # include <sys/time.h>
 # include <stdlib.h>
 # include <semaphore.h>
+# include <fcntl.h>
+# include <sys/wait.h>
 
 enum	e_philo_state
 {
@@ -50,7 +52,7 @@ typedef struct s_simulation
 	struct timeval	begin;
 	t_philo			*philos;
 	sem_t			*forks;
-	sem_t			logger_mutex;
+	sem_t			*logger_sem;
 }	t_simulation;
 
 typedef struct s_philo_worker_arg
@@ -75,8 +77,7 @@ t_simulation		*init_simulation(int argc, char **argv);
 void				allocate_philos_and_forks(t_simulation *env);
 
 void				sad_philo(t_simulation *env);
-void				*philo_worker(void *arg);
-void				*watcher_worker(void *simulation);
+int					philo_worker(t_simulation *env, t_philo *philo);
 int					setup_simulation(t_simulation *env);
 int					begin_simulation(t_simulation *env);
 
@@ -87,10 +88,9 @@ int					ph_sleep(t_simulation *env, t_philo *philo);
 
 void				set_state(t_simulation *env, t_philo *philo, \
 						enum e_philo_state status);
-int					is_dead(t_philo *philo);
+int					has_death();
 int					will_starve(t_simulation *env, t_philo *philo, \
 						int action_ms);
-int					has_death(t_simulation *env);
 
 void				adjust_for_midlaunch_abort(t_simulation *env, \
 						pthread_mutex_t *to_destory1, \

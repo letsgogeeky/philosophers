@@ -6,64 +6,44 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/23 21:09:40 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/25 13:48:15 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/02 21:47:46 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo_bonus.h"
 
-int	seat_philos(t_simulation *env)
+int init_philo(t_philo *philo, int number)
 {
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		env->philos[idx].number = idx + 1;
-		env->philos[idx].status = THINK;
-		env->philos[idx].meals_eaten = 0;
-		if (pthread_mutex_init(&env->forks[idx], NULL))
-			return (adjust_for_midlaunch_abort(env, NULL, NULL, idx - 1), 1);
-		if (pthread_mutex_init(&env->philos[idx].eating_mutex, NULL))
-			return (adjust_for_midlaunch_abort(env, \
-				&env->forks[idx], NULL, idx - 1), 1);
-		if (pthread_mutex_init(&env->philos[idx].starvation_mutex, NULL))
-			return (adjust_for_midlaunch_abort(env, \
-				&env->forks[idx], &env->philos[idx].eating_mutex, idx - 1), 1);
-		env->philos[idx].right_fork = &env->forks[idx];
-		if (idx >= 1)
-			env->philos[idx - 1].left_fork = &env->forks[idx];
-		idx++;
-	}
-	env->philos[idx - 1].left_fork = &env->forks[0];
+	philo->number = number;
+	philo->status = THINK;
+	philo->meals_eaten = 0;
 	return (0);
 }
 
 int	setup_simulation(t_simulation *env)
 {
 	env->bigbang_at = time_now();
-	if (pthread_mutex_init(&env->logger_mutex, NULL))
-		return (1);
-	if (pthread_mutex_init(&env->any_death_mutex, NULL))
-		return (1);
-	if (seat_philos(env))
-		abort_exit(env, NULL, 1);
 	if (env->num_of_philosophers == 1)
 	{
 		sad_philo(env);
 		return (1);
 	}
+	env->logger_sem = sem_open("/logger", O_CREAT, 0644, 1);
+	env->forks = sem_open("/forks", O_CREAT, 0644, env->num_of_philosophers);
+	sem_unlink("/logger");
+	sem_unlink("/forks");
 	return (0);
 }
 
-void	join_all_threads(t_simulation *env)
+void	wait_children(t_simulation *env)
 {
 	int	idx;
 
 	idx = 0;
 	while (idx < env->num_of_philosophers)
 	{
-		pthread_join(env->philos[idx].worker, NULL);
+		
+		waitpid(-1, NULL, 0);
 		idx++;
 	}
 }
@@ -71,30 +51,37 @@ void	join_all_threads(t_simulation *env)
 int	dispatch_philosophers(t_simulation *env)
 {
 	int					idx;
-	t_philo_worker_arg	worker_arg;
+	pid_t				pid;
 
 	idx = 0;
 	while (idx < env->num_of_philosophers)
 	{
-		worker_arg.env = env;
-		worker_arg.philo = &env->philos[idx];
-		if (pthread_create(&env->philos[idx].worker, NULL, philo_worker, \
-				copy_philo_worker_arg(worker_arg)))
-			return (1);
-		idx++;
+		pid = fork();
+		if (pid == 0)
+		{
+			init_philo(&env->philos[idx], idx + 1);
+			if (philo_worker(env, &env->philos[idx]))
+				return (1);
+			return (0);
+		}
+		if (pid != -1)
+			idx++;
 	}
+	if (pid != 0)
+		wait_children(env);
 	return (0);
 }
 
 int	begin_simulation(t_simulation *env)
 {
-	pthread_t	watcher;
+	// pthread_t	watcher;
 
-	if (pthread_create(&watcher, NULL, watcher_worker, env))
-		return (1);
+	// if (pthread_create(&watcher, NULL, watcher_worker, env))
+	// 	return (1);
 	if (dispatch_philosophers(env))
 		abort_exit(env, NULL, 1);
-	pthread_join(watcher, NULL);
-	join_all_threads(env);
+	// pthread_join(watcher, NULL);
+	// join_all_threads(env);
+	sem_unlink("/finish");
 	return (0);
 }

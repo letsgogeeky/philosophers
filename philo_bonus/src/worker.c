@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/23 21:15:36 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/25 13:48:46 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/01 21:48:54 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,33 +32,29 @@ static int	philo_lifecycle(t_simulation *env, t_philo *philo, int order)
 			order = 2;
 		else if (order)
 			order += 2;
-		pthread_mutex_lock(&philo->eating_mutex);
 		philo->meals_eaten++;
-		pthread_mutex_unlock(&philo->eating_mutex);
 	}
 	return (0);
 }
 
-void	*philo_worker(void *arg)
+int	philo_worker(t_simulation *env, t_philo *philo)
 {
-	t_philo_worker_arg	*ep;
 	int					order;
 
-	ep = (t_philo_worker_arg *)arg;
 	order = 1;
-	if (ep->env->num_of_philosophers % 2 == 0)
+	if (env->num_of_philosophers % 2 == 0)
 		order = 0;
-	if (ep->philo->number == order)
-		log_state(ep->env, ep->philo);
-	else if (ep->philo->meals_eaten < ep->env->meals_count && \
-		ep->philo->number % 2 == 0)
+	if (philo->number == order)
+		log_state(env, philo);
+	else if (philo->meals_eaten < env->meals_count && \
+		philo->number % 2 == 0)
 	{
-		log_state(ep->env, ep->philo);
-		if (ph_think(ep->env, ep->philo, ep->env->time_to_eat))
-			return (free(ep), NULL);
+		log_state(env, philo);
+		if (ph_think(env, philo, env->time_to_eat))
+			return (1);
 		if (order)
 			order++;
 	}
-	philo_lifecycle(ep->env, ep->philo, order);
-	return (free(ep), NULL);
+	philo_lifecycle(env, philo, order);
+	return (0);
 }
