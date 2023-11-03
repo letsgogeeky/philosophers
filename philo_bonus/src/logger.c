@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:27:17 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/02 21:47:36 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 16:11:16 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,15 +18,20 @@ void	log_state(t_simulation *env, t_philo *philo)
 
 	time_arrow = time_since(to_timestamp(env->begin));
 	sem_wait(env->logger_sem);
+	if (has_death())
+	{
+		sem_post(env->logger_sem);
+		return ;
+	}
 	if (philo->status == EAT)
 		printf("%i %i is eating\n", time_arrow, philo->number);
-	if (philo->status == SLEEP)
+	else if (philo->status == SLEEP)
 		printf("%i %i is sleeping\n", time_arrow, philo->number);
-	if (philo->status == THINK)
+	else if (philo->status == THINK)
 		printf("%i %i is thinking\n", time_arrow, philo->number);
-	if (philo->status == DEAD)
+	else if (philo->status == DEAD)
 		printf("%i %i died\n", time_arrow, philo->number);
-	if (philo->status == ACQUIRE)
+	else if (philo->status == ACQUIRE)
 		printf("%i %i has taken a fork\n", time_arrow, philo->number);
 	sem_post(env->logger_sem);
 }

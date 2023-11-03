@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/23 21:15:36 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/01 21:48:54 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 16:11:40 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,8 @@ static int	philo_lifecycle(t_simulation *env, t_philo *philo, int order)
 		else if (order)
 			order += 2;
 		philo->meals_eaten++;
+		if (has_death())
+			return (1);
 	}
 	return (0);
 }

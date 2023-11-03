@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:56 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/02 21:54:31 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 14:52:38 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,6 @@ int	main(int argc, char **argv)
 	gettimeofday(&env->begin, NULL);
 	if (setup_simulation(env))
 		abort_exit(env, NULL, 0);
-	populate_begin_time(env);
 	if (begin_simulation(env))
 		abort_exit(env, NULL, 1);
 	abort_exit(env, NULL, 0);

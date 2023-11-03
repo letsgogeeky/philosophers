@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/06 17:11:53 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/02 21:51:26 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 16:12:41 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ typedef struct s_simulation
 	t_philo			*philos;
 	sem_t			*forks;
 	sem_t			*logger_sem;
+	sem_t			*death;
 }	t_simulation;
 
 typedef struct s_philo_worker_arg
@@ -88,7 +89,7 @@ int					ph_sleep(t_simulation *env, t_philo *philo);
 
 void				set_state(t_simulation *env, t_philo *philo, \
 						enum e_philo_state status);
-int					has_death();
+int					has_death(void);
 int					will_starve(t_simulation *env, t_philo *philo, \
 						int action_ms);
 

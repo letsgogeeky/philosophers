@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:36:54 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/01 22:27:59 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 16:11:07 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 
 int	ph_sleep(t_simulation *env, t_philo *philo)
 {
+	if (has_death())
+		return (1);
 	set_state(env, philo, SLEEP);
 	if (will_starve(env, philo, env->time_to_sleep))
 		return (1);
@@ -36,7 +38,8 @@ int	ph_think(t_simulation *env, t_philo *philo, int thinking_ms)
 
 int	ph_eat(t_simulation *env, t_philo *philo)
 {
-	// philo->status = EAT;
+	if (has_death())
+		return (1);
 	philo->status = ACQUIRE;
 	sem_wait(env->forks);
 	log_state(env, philo);

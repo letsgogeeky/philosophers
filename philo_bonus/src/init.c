@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/14 13:34:13 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/11/02 21:54:18 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 16:13:17 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,16 +46,13 @@ static int	ft_atoi(const char *str)
 	return (result);
 }
 
-void	populate_begin_time(t_simulation *env)
+static void	allocate_philos(t_simulation *env)
 {
-	int	idx;
-
-	idx = 0;
-	while (idx < env->num_of_philosophers)
-	{
-		env->philos[idx].last_meal_at = env->begin;
-		idx++;
-	}
+	env->philos = ft_calloc(env->num_of_philosophers, sizeof(t_philo));
+	if (!env->philos)
+		abort_exit(env, NULL, 1);
+	env->forks = NULL;
+	env->death = NULL;
 }
 
 t_simulation	*init_simulation(int argc, char **argv)
@@ -82,8 +79,6 @@ t_simulation	*init_simulation(int argc, char **argv)
 		if (env->meals_count < 0)
 			abort_exit(env, "Num of times to eat cannot be less than 0", 2);
 	}
-	env->philos = ft_calloc(env->num_of_philosophers, sizeof(t_philo));
-	if (!env->philos)
-		abort_exit(env, NULL, 1);
+	allocate_philos(env);
 	return (env);
 }

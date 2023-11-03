@@ -6,7 +6,7 @@
 /*   By: ramoussa <ramoussa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/10/22 20:12:40 by ramoussa          #+#    #+#             */
-/*   Updated: 2023/10/25 13:48:39 by ramoussa         ###   ########.fr       */
+/*   Updated: 2023/11/03 15:28:17 by ramoussa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ void	time_sleep(int ms)
 	gettimeofday(&time, NULL);
 	while (to_timestamp(time) < until)
 	{
-		usleep(1000);
+		usleep(500);
 		gettimeofday(&time, NULL);
 	}
 }
